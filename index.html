@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Guitarist's Friend</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3498db">
 </head>
 <body>
   <header>
@@ -41,25 +43,25 @@
     <button class="clearAll" id="clearAllNotes">Clear All Notes</button>
   </main>
     
-    <!-- Song View Page -->
-<main id="songViewPage" class="hidden">
-  <h2 id="songTitle"></h2>
-  <section class="timer">
-    <label for="minutesSong">Timer (minutes):</label>
-    <input type="number" id="minutesSong" min="1" value="1">
-    <button id="startButtonSong">Start Auto Scroll</button>
-    <button id="releaseButtonSong">Stop</button>
-    <div id="countdownSong"></div>
-    <div class="progress"><div id="progressBarSong"></div></div>
-  </section>
-  <div id="songLyrics" class="lyricsBox"></div>
-  <button id="backToSaved">⬅ Back</button>
-</main>
+  <!-- Song View Page -->
+  <main id="songViewPage" class="hidden">
+    <h2 id="songTitle"></h2>
+    <section class="timer">
+      <label for="minutesSong">Timer (minutes):</label>
+      <input type="number" id="minutesSong" min="1" value="4">
+      <button id="startButtonSong">Start Auto Scroll</button>
+      <button id="releaseButtonSong">Stop</button>
+      <div id="countdownSong"></div>
+      <div class="progress"><div id="progressBarSong"></div></div>
+    </section>
+    <div id="songLyrics" class="lyricsBox"></div>
+    <button id="backToSaved">⬅ Back</button>
+  </main>
 
   <script src="script.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
+      navigator.serviceWorker.register('service-worker.js').catch(err => console.log('SW registration failed:', err));
     }
   </script>
 </body>
