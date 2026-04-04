@@ -222,3 +222,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+function handleOrientationChange() {
+  if (window.matchMedia("(orientation: portrait)").matches) {
+    document.body.classList.remove("landscape");
+    document.body.classList.add("portrait");
+  } else {
+    document.body.classList.remove("portrait");
+    document.body.classList.add("landscape");
+  }
+}
+
+window.addEventListener("orientationchange", handleOrientationChange);
+document.addEventListener("DOMContentLoaded", handleOrientationChange);
