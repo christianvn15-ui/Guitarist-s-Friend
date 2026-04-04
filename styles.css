@@ -155,3 +155,58 @@ button:hover {
   border-radius: 6px;
   margin-top: 15px;
 }
+
+/* Base layout */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Make main content flex */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+/* Responsive lyrics box */
+.lyricsBox {
+  flex: 1;
+  max-height: 70vh;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 15px;
+  background: #fff;
+  line-height: 1.5em;
+  font-size: 1.1em;
+  border-radius: 6px;
+  margin-top: 15px;
+}
+
+/* Portrait defaults */
+@media screen and (orientation: portrait) {
+  header, main {
+    flex-direction: column;
+  }
+  .editor, .timer {
+    width: 100%;
+  }
+}
+
+/* Landscape layout */
+@media screen and (orientation: landscape) {
+  header, main {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: flex-start;
+  }
+  .editor, .timer {
+    width: 45%;
+  }
+  .lyricsBox {
+    max-height: 80vh;
+    font-size: 1.2em;
+  }
+}
