@@ -20,9 +20,17 @@
     <section class="editor">
       <h2>Write Lyrics</h2>
       <input type="text" id="noteTitle" placeholder="Note title">
-      <button id="saveNote">Save Note</button>
+      <button id="saveNote">Save Lyrics</button>
       <br>
-      <textarea id="notesArea" placeholder="Type your lyrics here..."></textarea>
+      <textarea id="notesArea" placeholder="[Intro] 
+<br>
+[Verse 1]<br>
+xxxxx<br>
+<br>
+[Chorus]<br>
+xxxxx<br>
+<br>
+... "></textarea>
     </section>
   </main>
 
@@ -40,7 +48,7 @@
     <br>
     <button id="backButton">⬅ Back</button>
     <div id="notesList"></div>
-    <button class="clearAll" id="clearAllNotes">Clear All Notes</button>
+    <button class="clearAll" id="clearAllNotes">Clear All Songs</button>
   </main>
     
   <!-- Song View Page -->
@@ -49,7 +57,7 @@
     <section class="timer">
       <label for="minutesSong">Timer (minutes):</label>
       <input type="number" id="minutesSong" min="1" value="4">
-      <button id="startButtonSong">Start Auto Scroll</button>
+      <button id="startButtonSong">Start</button>
       <button id="releaseButtonSong">Stop</button>
       <div id="countdownSong"></div>
       <div class="progress"><div id="progressBarSong"></div></div>
