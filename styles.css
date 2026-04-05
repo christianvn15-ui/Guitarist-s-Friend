@@ -15,9 +15,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  position: static;
 }
 
 header h1 {
@@ -189,17 +187,16 @@ button:active {
 }
 
 .lyricsBox {
-  max-height: 70vh;
+  max-height: 80vh;
+  width: 90%;
   overflow-y: auto;
-  border: 1px solid #ccc;
   padding: 20px;
-  background: #fff;
+  background: #f4f6f9;
   line-height: 2em;
   font-size: 1.2em;
-  border-radius: 8px;
   margin-top: 15px;
   white-space: pre-wrap;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  
 }
 
 /* Responsive adjustments */
