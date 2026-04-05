@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#3498db">
+  
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.1.0/css/all.css" integrity="sha512-ajhUYg8JAATDFejqbeN7KbF2zyPbbqz04dgOLyGcYEk/MJD3V+HJhJLKvJ2VVlqrr4PwHeGTTWxbI+8teA7snw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
 </head>
 <body>
   <header>
@@ -20,7 +23,7 @@
     <section class="editor">
       <h2>Write Lyrics</h2>
       <input type="text" id="noteTitle" placeholder="Note title">
-      <button id="saveNote">Save Note</button>
+      <button id="saveNote"><i class="fas fa-save"></i></button>
       <br>
       <textarea id="notesArea" placeholder="[Intro]
       
@@ -56,7 +59,7 @@
     <section class="timer">
       <label for="minutesSong">Timer (minutes):</label>
       <input type="number" id="minutesSong" min="1" value="4">
-      <button id="startButtonSong">Start Auto Scroll</button>
+      <button id="startButtonSong"><i class="fas fa-save"></i></button>
       <button id="releaseButtonSong">Stop</button>
       <div id="countdownSong"></div>
       <div class="progress"><div id="progressBarSong"></div></div>
