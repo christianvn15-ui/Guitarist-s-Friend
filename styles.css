@@ -59,15 +59,17 @@ main {
 input, button {
   margin: 5px;
   padding: 10px;
-  font-size: 1em;
-  font-family: inherit;
+  font-size: 18px;
+  
+  font-family: 'Segoe UI', Arial, Sans-Serif;
+  border: none;
 }
 
 textarea {
   min-height: 100vh;
   height: 80%;
   width: 100%;
-  background: #f4f6f9;
+  background: #fff;
   border: none;
   margin-left: 10px;
   padding: 10px;
