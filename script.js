@@ -113,7 +113,7 @@ function initAuth() {
     currentUser = user;
     if (user) {
       // User is signed in
-      authButton.textContent = 'Sign Out';
+      authButton.textContent = 'Quit';
       authButton.onclick = handleSignOut;
       if (authStatus) {
         authStatus.textContent = `Signed in as: ${user.displayName || user.email}`;
