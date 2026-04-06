@@ -1,4 +1,4 @@
-const CACHE_NAME = "Musician™-v1";
+const CACHE_NAME = "Musician-v2";
 
 // Files to cache
 const STATIC_ASSETS = [
