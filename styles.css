@@ -56,11 +56,27 @@ main {
   width: 90%;
 }
 
-input, button, textarea {
+input, button {
   margin: 5px;
   padding: 10px;
   font-size: 1em;
   font-family: inherit;
+}
+
+textarea {
+  min-height: 100vh;
+  height: 80%;
+  width: 100%;
+  background: #f4f6f9;
+  border: none;
+  margin-left: 10px;
+  padding: 10px;
+  font-size: 16px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+textarea::hover {
+  border: none;
 }
 
 button {
