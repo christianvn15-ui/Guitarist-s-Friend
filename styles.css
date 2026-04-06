@@ -200,7 +200,6 @@ button:active {
 /* Auth button styles */
 .auth-btn {
   background: #27ae60;
-  
   border: none;
   color: #fff;
   padding: 8px 12px;
@@ -228,12 +227,6 @@ button:active {
 
 .auth-status.signed-out {
   color: #e74c3c;
-  border: none;
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1em;
 }
 
 .sync-btn {
