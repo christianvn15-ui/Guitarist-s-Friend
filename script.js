@@ -235,7 +235,7 @@ function loadNotes() {
       <strong contenteditable="true" onblur="window.renameNote(${index}, this.textContent)">${escapeHtml(note.title)}</strong>
       <div>
         <button onclick="window.showSong(${index})">Open</button>
-        <button class="deleteNote" onclick="window.deleteNote(${index})">Delete</button>
+        <button class="deleteNote" onclick="window.deleteNote(${index})"><i class="fa-solid fa-trash"></i></button>
       </div>
     `;
     notesList.appendChild(div);
