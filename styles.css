@@ -60,7 +60,13 @@ input, button {
   margin: 5px;
   padding: 10px;
   font-size: 18px;
-  
+  font-family: 'Segoe UI', Arial, Sans-Serif;
+}
+
+.songTitle {
+  margin: 5px;
+  padding: 10px;
+  font-size: 18px;
   font-family: 'Segoe UI', Arial, Sans-Serif;
   border: none;
 }
