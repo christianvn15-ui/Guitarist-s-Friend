@@ -200,7 +200,13 @@ button:active {
 /* Auth button styles */
 .auth-btn {
   background: #27ae60;
-  margin-left: 10px;
+  
+  border: none;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1em;
 }
 
 .auth-btn:hover {
