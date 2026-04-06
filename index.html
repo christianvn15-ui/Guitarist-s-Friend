@@ -7,23 +7,27 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#3498db">
-  
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.1.0/css/all.css" integrity="sha512-ajhUYg8JAATDFejqbeN7KbF2zyPbbqz04dgOLyGcYEk/MJD3V+HJhJLKvJ2VVlqrr4PwHeGTTWxbI+8teA7snw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
+
+  <!-- Firebase Modular SDK -->
+  <script type="module" src="script.js"></script>
+
 </head>
 <body>
   <header>
     <h1>🎸 Guitarist's Friend</h1>
     <nav>
-      <button id="navNotes">Saved Lyrics</button>
+      <button id="navNotes">Saved</button>
+      <button id="authButton" class="auth-btn">Sign In</button>
     </nav>
   </header>
 
   <main id="mainPage">
     <section class="editor">
       <h2>Write Lyrics</h2>
-      <input type="text" id="noteTitle" placeholder="Note title">
-      <button id="saveNote"><i class="fas fa-save"></i></button>
+      <input type="text" id="noteTitle" placeholder="Song title">
+      <button id="saveNote">Save <i class="fas fa-save"></i></button>
       <br>
       <textarea id="notesArea" placeholder="[Intro]
       
@@ -39,6 +43,7 @@
   <!-- Saved Notes Page -->
   <main id="savedPage" class="hidden">
     <h2>Saved Lyrics</h2>
+    <div id="authStatus" class="auth-status"></div>
     <section class="timer">
       <label for="minutesSaved">Timer (minutes):</label>
       <input type="number" id="minutesSaved" min="1" value="1">
@@ -48,11 +53,12 @@
       <div class="progress"><div id="progressBarSaved"></div></div>
     </section>
     <br>
-    <button id="backButton">⬅ Back</button>
+    <button id="backButton"><i class="fas fa-angle-double-left"></i> Back</button>
     <div id="notesList"></div>
     <button class="clearAll" id="clearAllNotes">Clear All Notes</button>
+    <button class="sync-btn" id="syncButton"><i class="fas fa-sync"></i> Sync to Cloud</button>
   </main>
-    
+
   <!-- Song View Page -->
   <main id="songViewPage" class="hidden">
     <h2 id="songTitle"></h2>
@@ -65,10 +71,9 @@
       <div class="progress"><div id="progressBarSong"></div></div>
     </section>
     <div id="songLyrics" class="lyricsBox"></div>
-    <button id="backToSaved">⬅ Back</button>
+    <button id="backToSaved"><i class="fas fa-angle-double-left"></i> Back</button>
   </main>
 
-  <script src="script.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js').catch(err => console.log('SW registration failed:', err));
