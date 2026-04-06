@@ -1,4 +1,3 @@
-
 // ============================================
 // FIREBASE IMPORTS - Modular SDK v9+
 // ============================================
@@ -16,7 +15,8 @@ import {
   doc, 
   setDoc, 
   getDoc,
-  serverTimestamp 
+  serverTimestamp,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
 // ============================================
@@ -42,6 +42,7 @@ let wakeLock = null;
 let countdownInterval = null;
 let autoScrollInterval = null;
 let currentUser = null;
+let unsubscribeFromNotes = null;
 
 // --- Wake Lock + Timer ---
 async function requestWakeLock(durationMinutes, countdownEl, progressEl) {
@@ -112,14 +113,14 @@ function initAuth() {
     currentUser = user;
     if (user) {
       // User is signed in
-      authButton.textContent = 'Quit';
+      authButton.textContent = 'Sign Out';
       authButton.onclick = handleSignOut;
       if (authStatus) {
         authStatus.textContent = `Signed in as: ${user.displayName || user.email}`;
         authStatus.className = 'auth-status signed-in';
       }
-      // Load notes from cloud when signed in
-      loadNotesFromCloud();
+      // Start real-time sync when signed in
+      startRealtimeSync();
     } else {
       // User is signed out
       authButton.textContent = 'Sign In';
@@ -128,7 +129,8 @@ function initAuth() {
         authStatus.textContent = 'Not signed in - using local storage only';
         authStatus.className = 'auth-status signed-out';
       }
-      // Load from local storage when not signed in
+      // Stop real-time sync
+      stopRealtimeSync();
       loadNotes();
     }
   });
@@ -146,6 +148,67 @@ function handleSignOut() {
   signOut(auth).catch((error) => {
     console.error('Sign out error:', error);
   });
+}
+
+// --- Real-time Sync with Firestore ---
+function startRealtimeSync() {
+  if (!currentUser) return;
+  
+  console.log('[Sync] Starting real-time sync for user:', currentUser.uid);
+  
+  // Stop any existing listener
+  stopRealtimeSync();
+  
+  // Set up real-time listener
+  const userDocRef = doc(db, 'users', currentUser.uid);
+  unsubscribeFromNotes = onSnapshot(userDocRef, (docSnapshot) => {
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      console.log('[Sync] Received data from cloud:', data);
+      
+      if (data.notes) {
+        const cloudNotes = data.notes;
+        const localNotes = getNotes();
+        
+        // Check if cloud has different data
+        const cloudNotesJson = JSON.stringify(cloudNotes);
+        const localNotesJson = JSON.stringify(localNotes);
+        
+        if (cloudNotesJson !== localNotesJson) {
+          console.log('[Sync] Cloud data differs from local, updating...');
+          saveNotes(cloudNotes);
+          loadNotes();
+          updateSyncStatus('Synced from cloud');
+        } else {
+          console.log('[Sync] Data is already in sync');
+        }
+      }
+    } else {
+      console.log('[Sync] No cloud data yet, uploading local data');
+      syncToCloud();
+    }
+  }, (error) => {
+    console.error('[Sync] Real-time sync error:', error);
+    updateSyncStatus('Sync error: ' + error.message);
+  });
+}
+
+function stopRealtimeSync() {
+  if (unsubscribeFromNotes) {
+    unsubscribeFromNotes();
+    unsubscribeFromNotes = null;
+    console.log('[Sync] Stopped real-time sync');
+  }
+}
+
+function updateSyncStatus(message) {
+  const syncButton = document.getElementById('syncButton');
+  if (syncButton) {
+    syncButton.innerHTML = `<i class="fas fa-check"></i> ${message}`;
+    setTimeout(() => {
+      syncButton.innerHTML = '<i class="fas fa-sync"></i> Sync to Cloud';
+    }, 3000);
+  }
 }
 
 // --- Notes system ---
@@ -197,15 +260,22 @@ function saveNote() {
   if (!content.trim()) return;
 
   const notes = getNotes();
-  notes.push({ title, content, createdAt: new Date().toISOString() });
+  const newNote = { 
+    title, 
+    content, 
+    createdAt: new Date().toISOString(),
+    id: Date.now().toString() // Add unique ID
+  };
+  notes.push(newNote);
   saveNotes(notes);
 
   notesArea.value = '';
   titleInput.value = '';
   loadNotes();
   
-  // If signed in, sync to cloud automatically
+  // Sync to cloud if signed in
   if (currentUser) {
+    console.log('[Save] New note saved, syncing to cloud...');
     syncToCloud();
   }
 }
@@ -219,6 +289,7 @@ function deleteNote(index) {
   loadNotes();
   
   if (currentUser) {
+    console.log('[Delete] Note deleted, syncing to cloud...');
     syncToCloud();
   }
 }
@@ -227,10 +298,12 @@ function renameNote(index, newTitle) {
   const notes = getNotes();
   if (notes[index]) {
     notes[index].title = newTitle.trim() || "Untitled";
+    notes[index].updatedAt = new Date().toISOString();
     saveNotes(notes);
     loadNotes();
     
     if (currentUser) {
+      console.log('[Rename] Note renamed, syncing to cloud...');
       syncToCloud();
     }
   }
@@ -242,6 +315,7 @@ function clearAllNotes() {
     loadNotes();
     
     if (currentUser) {
+      console.log('[Clear] All notes cleared, syncing to cloud...');
       syncToCloud();
     }
   }
@@ -262,60 +336,33 @@ async function syncToCloud() {
 
   try {
     const notes = getNotes();
+    console.log('[Sync] Uploading to cloud:', notes);
+    
     await setDoc(doc(db, 'users', currentUser.uid), {
       notes: notes,
-      lastSynced: serverTimestamp()
+      lastSynced: serverTimestamp(),
+      userId: currentUser.uid
     }, { merge: true });
     
-    if (syncButton) {
-      syncButton.innerHTML = '<i class="fas fa-check"></i> Synced!';
-      setTimeout(() => {
-        syncButton.innerHTML = '<i class="fas fa-sync"></i> Sync to Cloud';
-        syncButton.disabled = false;
-      }, 2000);
-    }
+    console.log('[Sync] Upload successful');
+    updateSyncStatus('Synced!');
+    
   } catch (error) {
-    console.error('Sync error:', error);
+    console.error('[Sync] Upload error:', error);
     if (syncButton) {
       syncButton.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Sync Failed';
       setTimeout(() => {
         syncButton.innerHTML = '<i class="fas fa-sync"></i> Sync to Cloud';
         syncButton.disabled = false;
-      }, 2000);
+      }, 3000);
     }
     alert('Sync failed: ' + error.message);
   }
 }
 
 async function loadNotesFromCloud() {
-  if (!currentUser) return;
-
-  try {
-    const docRef = doc(db, 'users', currentUser.uid);
-    const docSnap = await getDoc(docRef);
-    
-    if (docSnap.exists() && docSnap.data().notes) {
-      const cloudNotes = docSnap.data().notes;
-      const localNotes = getNotes();
-      
-      // Merge strategy: if cloud has more notes, use cloud; otherwise keep local
-      if (cloudNotes.length > localNotes.length) {
-        saveNotes(cloudNotes);
-        loadNotes();
-      } else if (localNotes.length > cloudNotes.length) {
-        // Local has more, sync up to cloud
-        syncToCloud();
-      }
-    } else {
-      // No cloud data, upload local data
-      if (getNotes().length > 0) {
-        syncToCloud();
-      }
-    }
-  } catch (error) {
-    console.error('Load from cloud error:', error);
-    loadNotes(); // Fallback to local
-  }
+  // This is now handled by real-time sync
+  console.log('[Sync] Using real-time sync instead');
 }
 
 // --- Song view ---
