@@ -20,7 +20,24 @@ header {
 
 header h1 {
   margin: 0;
-  font-size: 1.5em;
+  font-size: 18px;
+}
+
+.logo {
+    color:  rgb(24, 133, 223);
+    background: transparent;
+    border: 6px solid rgb(31, 219, 219, 0.7);
+    font-size: 22px;
+    font-weight: 900;
+    border-radius: 100%;
+    padding: 8px;
+    text-decoration: none;
+    transition: transform 0.5s ease-in-out;
+}
+
+.logo:hover {
+    text-decoration: none;
+    transform: scale(1.05);
 }
 
 nav button {
