@@ -1,6 +1,4 @@
-// ============================================
-// FIREBASE IMPORTS - Modular SDK v9+
-// ============================================
+//Firebase logic
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-analytics.js";
 import { 
@@ -19,9 +17,7 @@ import {
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-// ============================================
-// YOUR FIREBASE CONFIG
-// ============================================
+//Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyD549PgcblHYyyoZaNyFb0afZOT9MZVSfc",
   authDomain: "guitarist-s-friend.firebaseapp.com",
@@ -42,9 +38,9 @@ let wakeLock = null;
 let countdownInterval = null;
 let autoScrollInterval = null;
 let currentUser = null;
-let unsubscribeFromNotes = null;
+let unsubscribeFromLyrics = null;
 
-// --- Wake Lock + Timer ---
+// Wakelock & timer
 async function requestWakeLock(durationMinutes, countdownEl, progressEl) {
   try {
     if (wakeLock) {
@@ -104,11 +100,11 @@ function updateProgress(remaining, total, progressEl) {
   progressEl.style.width = percent + "%";
 }
 
-// --- Firebase Auth ---
+// Firebase Authentication
 function initAuth() {
   const authButton = document.getElementById('authButton');
   const authStatus = document.getElementById('authStatus');
-  
+
   onAuthStateChanged(auth, (user) => {
     currentUser = user;
     if (user) {
@@ -131,7 +127,7 @@ function initAuth() {
       }
       // Stop real-time sync
       stopRealtimeSync();
-      loadNotes();
+      loadLyrics();
     }
   });
 }
@@ -150,34 +146,34 @@ function handleSignOut() {
   });
 }
 
-// --- Real-time Sync with Firestore ---
+// Real-time Sync with Firestore
 function startRealtimeSync() {
   if (!currentUser) return;
-  
+
   console.log('[Sync] Starting real-time sync for user:', currentUser.uid);
-  
+
   // Stop any existing listener
   stopRealtimeSync();
-  
+
   // Set up real-time listener
   const userDocRef = doc(db, 'users', currentUser.uid);
-  unsubscribeFromNotes = onSnapshot(userDocRef, (docSnapshot) => {
+  unsubscribeFromLyrics = onSnapshot(userDocRef, (docSnapshot) => {
     if (docSnapshot.exists()) {
       const data = docSnapshot.data();
       console.log('[Sync] Received data from cloud:', data);
-      
-      if (data.notes) {
-        const cloudNotes = data.notes;
-        const localNotes = getNotes();
-        
+
+      if (data.lyrics) {
+        const cloudLyrics = data.lyrics;
+        const localLyrics = getLyrics();
+
         // Check if cloud has different data
-        const cloudNotesJson = JSON.stringify(cloudNotes);
-        const localNotesJson = JSON.stringify(localNotes);
-        
-        if (cloudNotesJson !== localNotesJson) {
+        const cloudLyricsJson = JSON.stringify(cloudLyrics);
+        const localLyricsJson = JSON.stringify(localLyrics);
+
+        if (cloudLyricsJson !== localLyricsJson) {
           console.log('[Sync] Cloud data differs from local, updating...');
-          saveNotes(cloudNotes);
-          loadNotes();
+          saveLyrics(cloudLyrics);
+          loadLyrics();
           updateSyncStatus('Synced from cloud');
         } else {
           console.log('[Sync] Data is already in sync');
@@ -194,9 +190,9 @@ function startRealtimeSync() {
 }
 
 function stopRealtimeSync() {
-  if (unsubscribeFromNotes) {
-    unsubscribeFromNotes();
-    unsubscribeFromNotes = null;
+  if (unsubscribeFromLyrics) {
+    unsubscribeFromLyrics();
+    unsubscribeFromLyrics = null;
     console.log('[Sync] Stopped real-time sync');
   }
 }
@@ -211,34 +207,34 @@ function updateSyncStatus(message) {
   }
 }
 
-// --- Notes system ---
-function getNotes() {
-  const notes = localStorage.getItem('notes');
-  return notes ? JSON.parse(notes) : [];
+// --- Lyrics system ---
+function getLyrics() {
+  const lyrics = localStorage.getItem('lyrics');
+  return lyrics ? JSON.parse(lyrics) : [];
 }
 
-function saveNotes(notes) {
-  localStorage.setItem('notes', JSON.stringify(notes));
+function saveLyrics(lyrics) {
+  localStorage.setItem('lyrics', JSON.stringify(lyrics));
 }
 
-function loadNotes() {
-  const notesList = document.getElementById('notesList');
-  if (!notesList) return;
+function loadLyrics() {
+  const lyricsList = document.getElementById('lyricsList');
+  if (!lyricsList) return;
 
-  notesList.innerHTML = '';
-  const notes = getNotes();
+  lyricsList.innerHTML = '';
+  const lyrics = getLyrics();
 
-  notes.forEach((note, index) => {
+  lyrics.forEach((lyric, index) => {
     const div = document.createElement('div');
-    div.className = 'noteItem';
+    div.className = 'lyricItem';
     div.innerHTML = `
-      <strong contenteditable="true" onblur="window.renameNote(${index}, this.textContent)">${escapeHtml(note.title)}</strong>
+      <strong contenteditable="true" onblur="window.renameLyric(${index}, this.textContent)">${escapeHtml(lyric.title)}</strong>
       <div>
         <button onclick="window.showSong(${index})">Open</button>
-        <button class="deleteNote" onclick="window.deleteNote(${index})"><i class="fas fa-trash"></i></button>
+        <button class="deleteLyric" onclick="window.deleteLyric(${index})"><i class="fas fa-trash"></i></button>
       </div>
     `;
-    notesList.appendChild(div);
+    lyricsList.appendChild(div);
   });
 }
 
@@ -248,74 +244,74 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-function saveNote() {
-  const titleInput = document.getElementById('noteTitle');
-  const notesArea = document.getElementById('notesArea');
+function saveLyric() {
+  const titleInput = document.getElementById('lyricTitle');
+  const lyricsArea = document.getElementById('lyricsArea');
 
-  if (!titleInput || !notesArea) return;
+  if (!titleInput || !lyricsArea) return;
 
   const title = titleInput.value.trim() || "Untitled";
-  const content = notesArea.value;
+  const content = lyricsArea.value;
 
   if (!content.trim()) return;
 
-  const notes = getNotes();
-  const newNote = { 
+  const lyrics = getLyrics();
+  const newLyric = { 
     title, 
     content, 
     createdAt: new Date().toISOString(),
     id: Date.now().toString() // Add unique ID
   };
-  notes.push(newNote);
-  saveNotes(notes);
+  lyrics.push(newLyric);
+  saveLyrics(lyrics);
 
-  notesArea.value = '';
+  lyricsArea.value = '';
   titleInput.value = '';
-  loadNotes();
-  
+  loadLyrics();
+
   // Sync to cloud if signed in
   if (currentUser) {
-    console.log('[Save] New note saved, syncing to cloud...');
+    console.log('[Save] New lyric saved, syncing to cloud...');
     syncToCloud();
   }
 }
 
-function deleteNote(index) {
-  if (!confirm("Delete this note?")) return;
+function deleteLyric(index) {
+  if (!confirm("Delete this lyric?")) return;
 
-  const notes = getNotes();
-  notes.splice(index, 1);
-  saveNotes(notes);
-  loadNotes();
-  
+  const lyrics = getLyrics();
+  lyrics.splice(index, 1);
+  saveLyrics(lyrics);
+  loadLyrics();
+
   if (currentUser) {
-    console.log('[Delete] Note deleted, syncing to cloud...');
+    console.log('[Delete] Lyric deleted, syncing to cloud...');
     syncToCloud();
   }
 }
 
-function renameNote(index, newTitle) {
-  const notes = getNotes();
-  if (notes[index]) {
-    notes[index].title = newTitle.trim() || "Untitled";
-    notes[index].updatedAt = new Date().toISOString();
-    saveNotes(notes);
-    loadNotes();
-    
+function renameLyric(index, newTitle) {
+  const lyrics = getLyrics();
+  if (lyrics[index]) {
+    lyrics[index].title = newTitle.trim() || "Untitled";
+    lyrics[index].updatedAt = new Date().toISOString();
+    saveLyrics(lyrics);
+    loadLyrics();
+
     if (currentUser) {
-      console.log('[Rename] Note renamed, syncing to cloud...');
+      console.log('[Rename] Lyric renamed, syncing to cloud...');
       syncToCloud();
     }
   }
 }
 
-function clearAllNotes() {
-  if (confirm("Are you sure you want to clear all notes? This cannot be undone.")) {
-    localStorage.removeItem('notes');
-    loadNotes();
-    
+function clearAllLyrics() {
+  if (confirm("Are you sure you want to clear all lyrics? This cannot be undone.")) {
+    localStorage.removeItem('lyrics');
+    loadLyrics();
+
     if (currentUser) {
-      console.log('[Clear] All notes cleared, syncing to cloud...');
+      console.log('[Clear] All lyrics cleared, syncing to cloud...');
       syncToCloud();
     }
   }
@@ -335,18 +331,18 @@ async function syncToCloud() {
   }
 
   try {
-    const notes = getNotes();
-    console.log('[Sync] Uploading to cloud:', notes);
-    
+    const lyrics = getLyrics();
+    console.log('[Sync] Uploading to cloud:', lyrics);
+
     await setDoc(doc(db, 'users', currentUser.uid), {
-      notes: notes,
+      lyrics: lyrics,
       lastSynced: serverTimestamp(),
       userId: currentUser.uid
     }, { merge: true });
-    
+
     console.log('[Sync] Upload successful');
     updateSyncStatus('Synced!');
-    
+
   } catch (error) {
     console.error('[Sync] Upload error:', error);
     if (syncButton) {
@@ -360,16 +356,16 @@ async function syncToCloud() {
   }
 }
 
-async function loadNotesFromCloud() {
+async function loadLyricsFromCloud() {
   // This is now handled by real-time sync
   console.log('[Sync] Using real-time sync instead');
 }
 
 // --- Song view ---
 function showSong(index) {
-  const notes = getNotes();
-  const note = notes[index];
-  if (!note) return;
+  const lyrics = getLyrics();
+  const lyric = lyrics[index];
+  if (!lyric) return;
 
   stopAutoScroll(
     document.getElementById('countdownSong'),
@@ -382,9 +378,9 @@ function showSong(index) {
   const titleEl = document.getElementById('songTitle');
   const lyricsBox = document.getElementById('songLyrics');
 
-  if (titleEl) titleEl.textContent = note.title;
+  if (titleEl) titleEl.textContent = lyric.title;
   if (lyricsBox) {
-    lyricsBox.innerHTML = escapeHtml(note.content).replace(/\n/g, "<br>");
+    lyricsBox.innerHTML = escapeHtml(lyric.content).replace(/\n/g, "<br>");
     lyricsBox.scrollTop = 0;
   }
 }
@@ -441,10 +437,10 @@ document.addEventListener("DOMContentLoaded", () => {
   initAuth();
 
   // Main page elements
-  const saveNoteBtn = document.getElementById('saveNote');
+  const saveLyricBtn = document.getElementById('saveLyric');
 
-  if (saveNoteBtn) {
-    saveNoteBtn.addEventListener('click', saveNote);
+  if (saveLyricBtn) {
+    saveLyricBtn.addEventListener('click', saveLyric);
   }
 
   // Saved page elements
@@ -464,10 +460,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Clear all notes
-  const clearAllBtn = document.getElementById('clearAllNotes');
+  // Clear all lyrics
+  const clearAllBtn = document.getElementById('clearAllLyrics');
   if (clearAllBtn) {
-    clearAllBtn.addEventListener('click', clearAllNotes);
+    clearAllBtn.addEventListener('click', clearAllLyrics);
   }
 
   // Sync button
@@ -514,14 +510,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Navigation
-  const navNotes = document.getElementById('navNotes');
+  const navLyrics = document.getElementById('navLyrics');
   const backBtn = document.getElementById('backButton');
 
-  if (navNotes) {
-    navNotes.addEventListener('click', () => {
+  if (navLyrics) {
+    navLyrics.addEventListener('click', () => {
       document.getElementById('mainPage').classList.add('hidden');
       document.getElementById('savedPage').classList.remove('hidden');
-      loadNotes();
+      loadLyrics();
     });
   }
 
@@ -544,10 +540,142 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Initial load
-  loadNotes();
+  loadLyrics();
 });
 
 // Expose functions to window for inline event handlers
 window.showSong = showSong;
-window.deleteNote = deleteNote;
-window.renameNote = renameNote;
+window.deleteLyric = deleteLyric;
+window.renameLyric = renameLyric;
+
+// --- Search Functions ---
+function initSearch() {
+  const searchInput = document.getElementById('searchLyrics');
+  const clearBtn = document.getElementById('clearSearch');
+  const searchResults = document.getElementById('searchResults');
+  
+  if (!searchInput) return;
+  
+  // Real-time search as user types
+  searchInput.addEventListener('input', (e) => {
+    const query = e.target.value.trim().toLowerCase();
+    
+    if (query.length === 0) {
+      clearSearch();
+      return;
+    }
+    
+    performSearch(query);
+    clearBtn.classList.remove('hidden');
+  });
+  
+  // Clear search button
+  if (clearBtn) {
+    clearBtn.addEventListener('click', clearSearch);
+  }
+  
+  // Close search results when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-container') && !e.target.closest('.search-results')) {
+      searchResults.classList.add('hidden');
+    }
+  });
+}
+
+function performSearch(query) {
+  const lyrics = getLyrics();
+  const searchResults = document.getElementById('searchResults');
+  const lyricsList = document.getElementById('lyricsList');
+  
+  // Filter lyrics that match title or content
+  const results = lyrics.map((lyric, index) => {
+    const titleMatch = lyric.title.toLowerCase().includes(query);
+    const contentMatch = lyric.content.toLowerCase().includes(query);
+    const score = (titleMatch ? 2 : 0) + (contentMatch ? 1 : 0);
+    
+    return { lyric, index, score, titleMatch, contentMatch };
+  }).filter(item => item.score > 0).sort((a, b) => b.score - a.score);
+  
+  // Show/hide main list
+  if (results.length > 0) {
+    lyricsList.classList.add('hidden');
+    searchResults.classList.remove('hidden');
+    
+    // Build results HTML
+    searchResults.innerHTML = results.map(({ lyric, index, titleMatch, contentMatch }) => {
+      // Find matching snippet from content
+      let preview = lyric.content.substring(0, 100) + '...';
+      let highlightedTitle = escapeHtml(lyric.title);
+      let highlightedPreview = escapeHtml(preview);
+      
+      // Highlight matching text
+      if (titleMatch) {
+        highlightedTitle = highlightMatch(highlightedTitle, query);
+      }
+      if (contentMatch) {
+        const matchIndex = lyric.content.toLowerCase().indexOf(query);
+        const start = Math.max(0, matchIndex - 40);
+        const end = Math.min(lyric.content.length, matchIndex + query.length + 40);
+        preview = (start > 0 ? '...' : '') + lyric.content.substring(start, end) + (end < lyric.content.length ? '...' : '');
+        highlightedPreview = highlightMatch(escapeHtml(preview), query);
+      }
+      
+      return `
+        <div class="search-result-item" onclick="window.showSong(${index}); clearSearch();">
+          <div class="search-result-title">${highlightedTitle}</div>
+          <div class="search-result-preview">${highlightedPreview}</div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    searchResults.innerHTML = '<div class="no-results">No songs found matching "' + escapeHtml(query) + '"</div>';
+    searchResults.classList.remove('hidden');
+    lyricsList.classList.add('hidden');
+  }
+}
+
+function highlightMatch(text, query) {
+  const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+  return text.replace(regex, '<span class="search-highlight">$1</span>');
+}
+
+function escapeRegex(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function clearSearch() {
+  const searchInput = document.getElementById('searchLyrics');
+  const clearBtn = document.getElementById('clearSearch');
+  const searchResults = document.getElementById('searchResults');
+  const lyricsList = document.getElementById('lyricsList');
+  
+  if (searchInput) searchInput.value = '';
+  if (clearBtn) clearBtn.classList.add('hidden');
+  if (searchResults) searchResults.classList.add('hidden');
+  if (lyricsList) lyricsList.classList.remove('hidden');
+}
+
+// --- Page setup ---
+document.addEventListener("DOMContentLoaded", () => {
+  // Initialize Firebase Auth
+  initAuth();
+  
+  // Initialize search
+  initSearch();
+
+  // ... (keep all your existing event listeners below) ...
+  
+  // Main page elements
+  const saveLyricBtn = document.getElementById('saveLyric');
+  if (saveLyricBtn) {
+    saveLyricBtn.addEventListener('click', saveLyric);
+  }
+
+  // ... (rest of your existing code) ...
+});
+
+// Expose functions to window for inline event handlers
+window.showSong = showSong;
+window.deleteLyric = deleteLyric;
+window.renameLyric = renameLyric;
+window.clearSearch = clearSearch; // Expose clearSearch too
