@@ -144,7 +144,7 @@ button:active {
   transition: width 1s linear;
 }
 
-#notesArea {
+#lyricsArea {
   max-height: 80vh;
   width: 90%;
   overflow-y: auto;
@@ -156,7 +156,7 @@ button:active {
   white-space: pre-wrap;
 }
 
-.noteItem {
+.lyricItem {
   background: #fff;
   border: 1px solid #ccc;
   padding: 15px;
@@ -170,7 +170,7 @@ button:active {
   gap: 10px;
 }
 
-.noteItem strong {
+.lyricItem strong {
   flex: 1;
   min-width: 200px;
   cursor: text;
@@ -178,11 +178,11 @@ button:active {
   border-radius: 4px;
 }
 
-.noteItem strong:hover {
+.lyricItem strong:hover {
   background: #f0f0f0;
 }
 
-.noteItem strong:focus {
+.lyricItem strong:focus {
   outline: 2px solid #3498db;
   background: #fff;
 }
@@ -191,13 +191,13 @@ button:active {
   display: none !important;
 }
 
-#notesList {
+#lyricsList {
   font-family: Arial, sans-serif;
   font-size: 14px;
   margin-top: 20px;
 }
 
-.deleteNote {
+.deleteLyric {
   background: #c0392b;
   border: none;
   color: #fff;
@@ -207,7 +207,7 @@ button:active {
   font-size: 0.9em;
 }
 
-.deleteNote:hover {
+.deleteLyric:hover {
   background: #e74c3c;
 }
 
@@ -300,16 +300,124 @@ button:active {
     padding: 10px;
   }
 
-  .noteItem {
+  .lyricItem {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .noteItem strong {
+  .lyricItem strong {
     min-width: 100%;
   }
 
-  #notesArea {
+  #lyricsArea {
     height: 300px;
+  }
+}
+
+/* Search styles */
+.search-container {
+  position: relative;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 12px 15px;
+  font-size: 16px;
+  border: 2px solid #3498db;
+  border-radius: 25px;
+  outline: none;
+  transition: all 0.3s ease;
+  background: #fff;
+}
+
+.search-input:focus {
+  border-color: #2980b9;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.clear-search {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.clear-search:hover {
+  transform: scale(1.1);
+  background: #c0392b;
+}
+
+.search-results {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.search-result-item {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.search-result-item:hover {
+  background: #f8f9fa;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-title {
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.search-result-preview {
+  font-size: 13px;
+  color: #7f8c8d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-highlight {
+  background: #ffeaa7;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.no-results {
+  padding: 20px;
+  text-align: center;
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+/* Responsive search */
+@media (max-width: 600px) {
+  .search-container {
+    flex-direction: row;
+  }
+  
+  .search-input {
+    font-size: 16px; /* Prevents zoom on iOS */
   }
 }
