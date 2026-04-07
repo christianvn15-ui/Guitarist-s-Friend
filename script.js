@@ -104,28 +104,33 @@ function updateProgress(remaining, total, progressEl) {
 function initAuth() {
   const authButton = document.getElementById('authButton');
   const authStatus = document.getElementById('authStatus');
+  const setlistAuthStatus = document.getElementById('setlistAuthStatus');
 
   onAuthStateChanged(auth, (user) => {
     currentUser = user;
     if (user) {
-      // User is signed in
       authButton.textContent = 'Quit';
       authButton.onclick = handleSignOut;
       if (authStatus) {
         authStatus.textContent = `Signed in as: ${user.displayName || user.email}`;
         authStatus.className = 'auth-status signed-in';
       }
-      // Start real-time sync when signed in
+      if (setlistAuthStatus) {
+        setlistAuthStatus.textContent = `Signed in as: ${user.displayName || user.email}`;
+        setlistAuthStatus.className = 'auth-status signed-in';
+      }
       startRealtimeSync();
     } else {
-      // User is signed out
       authButton.textContent = 'Sign In';
       authButton.onclick = signInWithGoogle;
       if (authStatus) {
         authStatus.textContent = 'Not signed in - using local storage only';
         authStatus.className = 'auth-status signed-out';
       }
-      // Stop real-time sync
+      if (setlistAuthStatus) {
+        setlistAuthStatus.textContent = 'Not signed in - using local storage only';
+        setlistAuthStatus.className = 'auth-status signed-out';
+      }
       stopRealtimeSync();
       loadLyrics();
     }
@@ -152,10 +157,8 @@ function startRealtimeSync() {
 
   console.log('[Sync] Starting real-time sync for user:', currentUser.uid);
 
-  // Stop any existing listener
   stopRealtimeSync();
 
-  // Set up real-time listener
   const userDocRef = doc(db, 'users', currentUser.uid);
   unsubscribeFromLyrics = onSnapshot(userDocRef, (docSnapshot) => {
     if (docSnapshot.exists()) {
@@ -166,17 +169,34 @@ function startRealtimeSync() {
         const cloudLyrics = data.lyrics;
         const localLyrics = getLyrics();
 
-        // Check if cloud has different data
         const cloudLyricsJson = JSON.stringify(cloudLyrics);
         const localLyricsJson = JSON.stringify(localLyrics);
 
         if (cloudLyricsJson !== localLyricsJson) {
-          console.log('[Sync] Cloud data differs from local, updating...');
+          console.log('[Sync] Cloud lyrics differ from local, updating...');
           saveLyrics(cloudLyrics);
           loadLyrics();
           updateSyncStatus('Synced from cloud');
-        } else {
-          console.log('[Sync] Data is already in sync');
+        }
+      }
+      
+      if (data.setlists) {
+        const cloudSetlists = data.setlists;
+        const localSetlists = getSetlists();
+        
+        const cloudSetlistsJson = JSON.stringify(cloudSetlists);
+        const localSetlistsJson = JSON.stringify(localSetlists);
+        
+        if (cloudSetlistsJson !== localSetlistsJson) {
+          console.log('[Sync] Cloud setlists differ from local, updating...');
+          saveSetlists(cloudSetlists);
+          
+          if (!document.getElementById('setlistsPage').classList.contains('hidden')) {
+            loadSetlists();
+          }
+          if (!document.getElementById('setlistDetailPage').classList.contains('hidden')) {
+            loadSetlistSongs();
+          }
         }
       }
     } else {
@@ -260,7 +280,7 @@ function saveLyric() {
     title, 
     content, 
     createdAt: new Date().toISOString(),
-    id: Date.now().toString() // Add unique ID
+    id: Date.now().toString()
   };
   lyrics.push(newLyric);
   saveLyrics(lyrics);
@@ -269,7 +289,6 @@ function saveLyric() {
   titleInput.value = '';
   loadLyrics();
 
-  // Sync to cloud if signed in
   if (currentUser) {
     console.log('[Save] New lyric saved, syncing to cloud...');
     syncToCloud();
@@ -332,10 +351,13 @@ async function syncToCloud() {
 
   try {
     const lyrics = getLyrics();
-    console.log('[Sync] Uploading to cloud:', lyrics);
+    const setlists = getSetlists();
+    
+    console.log('[Sync] Uploading to cloud:', { lyrics, setlists });
 
     await setDoc(doc(db, 'users', currentUser.uid), {
       lyrics: lyrics,
+      setlists: setlists,
       lastSynced: serverTimestamp(),
       userId: currentUser.uid
     }, { merge: true });
@@ -356,11 +378,6 @@ async function syncToCloud() {
   }
 }
 
-async function loadLyricsFromCloud() {
-  // This is now handled by real-time sync
-  console.log('[Sync] Using real-time sync instead');
-}
-
 // --- Song view ---
 function showSong(index) {
   const lyrics = getLyrics();
@@ -373,6 +390,7 @@ function showSong(index) {
   );
 
   document.getElementById('savedPage').classList.add('hidden');
+  document.getElementById('setlistDetailPage').classList.add('hidden');
   document.getElementById('songViewPage').classList.remove('hidden');
 
   const titleEl = document.getElementById('songTitle');
@@ -431,123 +449,6 @@ function stopAutoScroll(countdownEl, progressEl) {
   releaseWakeLock(countdownEl, progressEl);
 }
 
-// --- Page setup ---
-document.addEventListener("DOMContentLoaded", () => {
-  // Initialize Firebase Auth
-  initAuth();
-
-  // Main page elements
-  const saveLyricBtn = document.getElementById('saveLyric');
-
-  if (saveLyricBtn) {
-    saveLyricBtn.addEventListener('click', saveLyric);
-  }
-
-  // Saved page elements
-  const startBtnSaved = document.getElementById('startButtonSaved');
-  const releaseBtnSaved = document.getElementById('releaseButtonSaved');
-
-  if (startBtnSaved) {
-    startBtnSaved.addEventListener('click', () => {
-      const minutes = parseInt(document.getElementById('minutesSaved')?.value, 10) || 1;
-      requestWakeLock(minutes, document.getElementById('countdownSaved'), document.getElementById('progressBarSaved'));
-    });
-  }
-
-  if (releaseBtnSaved) {
-    releaseBtnSaved.addEventListener('click', () => {
-      releaseWakeLock(document.getElementById('countdownSaved'), document.getElementById('progressBarSaved'));
-    });
-  }
-
-  // Clear all lyrics
-  const clearAllBtn = document.getElementById('clearAllLyrics');
-  if (clearAllBtn) {
-    clearAllBtn.addEventListener('click', clearAllLyrics);
-  }
-
-  // Sync button
-  const syncButton = document.getElementById('syncButton');
-  if (syncButton) {
-    syncButton.addEventListener('click', syncToCloud);
-  }
-
-  // Song view elements
-  const startBtnSong = document.getElementById('startButtonSong');
-  const releaseBtnSong = document.getElementById('releaseButtonSong');
-  const backToSaved = document.getElementById('backToSaved');
-
-  if (startBtnSong) {
-    startBtnSong.addEventListener('click', () => {
-      const minutes = parseInt(document.getElementById('minutesSong')?.value, 10) || 1;
-      const lyricsBox = document.getElementById('songLyrics');
-      if (lyricsBox) {
-        startAutoScroll(
-          minutes,
-          document.getElementById('countdownSong'),
-          document.getElementById('progressBarSong'),
-          lyricsBox
-        );
-      }
-    });
-  }
-
-  if (releaseBtnSong) {
-    releaseBtnSong.addEventListener('click', () => {
-      stopAutoScroll(document.getElementById('countdownSong'), document.getElementById('progressBarSong'));
-    });
-  }
-
-  if (backToSaved) {
-    backToSaved.addEventListener('click', () => {
-      stopAutoScroll(
-        document.getElementById('countdownSong'),
-        document.getElementById('progressBarSong')
-      );
-      document.getElementById('songViewPage').classList.add('hidden');
-      document.getElementById('savedPage').classList.remove('hidden');
-    });
-  }
-
-  // Navigation
-  const navLyrics = document.getElementById('navLyrics');
-  const backBtn = document.getElementById('backButton');
-
-  if (navLyrics) {
-    navLyrics.addEventListener('click', () => {
-      document.getElementById('mainPage').classList.add('hidden');
-      document.getElementById('savedPage').classList.remove('hidden');
-      loadLyrics();
-    });
-  }
-
-  if (backBtn) {
-    backBtn.addEventListener('click', () => {
-      document.getElementById('savedPage').classList.add('hidden');
-      document.getElementById('mainPage').classList.remove('hidden');
-    });
-  }
-
-  // Re-acquire wake lock on visibility change
-  document.addEventListener('visibilitychange', async () => {
-    if (wakeLock !== null && document.visibilityState === 'visible') {
-      try {
-        wakeLock = await navigator.wakeLock.request('screen');
-      } catch (err) {
-        console.log('Failed to re-acquire wake lock:', err);
-      }
-    }
-  });
-
-  // Initial load
-  loadLyrics();
-});
-
-// Expose functions to window for inline event handlers
-window.showSong = showSong;
-window.deleteLyric = deleteLyric;
-window.renameLyric = renameLyric;
-
 // --- Search Functions ---
 function initSearch() {
   const searchInput = document.getElementById('searchLyrics');
@@ -556,7 +457,6 @@ function initSearch() {
   
   if (!searchInput) return;
   
-  // Real-time search as user types
   searchInput.addEventListener('input', (e) => {
     const query = e.target.value.trim().toLowerCase();
     
@@ -569,12 +469,10 @@ function initSearch() {
     clearBtn.classList.remove('hidden');
   });
   
-  // Clear search button
   if (clearBtn) {
     clearBtn.addEventListener('click', clearSearch);
   }
   
-  // Close search results when clicking outside
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.search-container') && !e.target.closest('.search-results')) {
       searchResults.classList.add('hidden');
@@ -587,7 +485,6 @@ function performSearch(query) {
   const searchResults = document.getElementById('searchResults');
   const lyricsList = document.getElementById('lyricsList');
   
-  // Filter lyrics that match title or content
   const results = lyrics.map((lyric, index) => {
     const titleMatch = lyric.title.toLowerCase().includes(query);
     const contentMatch = lyric.content.toLowerCase().includes(query);
@@ -596,19 +493,15 @@ function performSearch(query) {
     return { lyric, index, score, titleMatch, contentMatch };
   }).filter(item => item.score > 0).sort((a, b) => b.score - a.score);
   
-  // Show/hide main list
   if (results.length > 0) {
     lyricsList.classList.add('hidden');
     searchResults.classList.remove('hidden');
     
-    // Build results HTML
     searchResults.innerHTML = results.map(({ lyric, index, titleMatch, contentMatch }) => {
-      // Find matching snippet from content
       let preview = lyric.content.substring(0, 100) + '...';
       let highlightedTitle = escapeHtml(lyric.title);
       let highlightedPreview = escapeHtml(preview);
       
-      // Highlight matching text
       if (titleMatch) {
         highlightedTitle = highlightMatch(highlightedTitle, query);
       }
@@ -655,27 +548,441 @@ function clearSearch() {
   if (lyricsList) lyricsList.classList.remove('hidden');
 }
 
+// --- Setlist System ---
+
+function getSetlists() {
+  const setlists = localStorage.getItem('setlists');
+  return setlists ? JSON.parse(setlists) : [];
+}
+
+function saveSetlists(setlists) {
+  localStorage.setItem('setlists', JSON.stringify(setlists));
+}
+
+function getCurrentSetlistId() {
+  return localStorage.getItem('currentSetlistId');
+}
+
+function setCurrentSetlistId(id) {
+  if (id) {
+    localStorage.setItem('currentSetlistId', id);
+  } else {
+    localStorage.removeItem('currentSetlistId');
+  }
+}
+
+// CREATE SETLIST FUNCTION - THIS WAS MISSING!
+function createSetlist() {
+  const nameInput = document.getElementById('newSetlistName');
+  const name = nameInput.value.trim();
+  
+  if (!name) {
+    alert('Please enter a setlist name');
+    return;
+  }
+
+  const setlists = getSetlists();
+  const newSetlist = {
+    id: Date.now().toString(),
+    name: name,
+    songIds: [],
+    createdAt: new Date().toISOString()
+  };
+  
+  setlists.push(newSetlist);
+  saveSetlists(setlists);
+  
+  nameInput.value = '';
+  loadSetlists();
+  
+  if (currentUser) {
+    syncToCloud();
+  }
+}
+
+function loadSetlists() {
+  const setlistsList = document.getElementById('setlistsList');
+  if (!setlistsList) return;
+
+  const setlists = getSetlists();
+  
+  if (setlists.length === 0) {
+    setlistsList.innerHTML = `
+      <div class="empty-setlists">
+        <i class="fas fa-folder-open"></i>
+        <p>No setlists yet. Create your first setlist above!</p>
+      </div>
+    `;
+    return;
+  }
+
+  setlistsList.innerHTML = setlists.map(setlist => {
+    const songCount = setlist.songIds ? setlist.songIds.length : 0;
+    return `
+      <div class="setlistItem" data-setlist-id="${setlist.id}">
+        <div class="setlist-info" onclick="window.openSetlist('${setlist.id}')">
+          <div class="setlist-name">${escapeHtml(setlist.name)}</div>
+          <div class="setlist-count">${songCount} song${songCount !== 1 ? 's' : ''}</div>
+        </div>
+        <div class="setlist-actions-inline">
+          <button onclick="event.stopPropagation(); window.renameSetlistPrompt('${setlist.id}')" class="setlist-inline-btn rename-inline-btn" title="Rename">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button onclick="event.stopPropagation(); window.deleteSetlistPrompt('${setlist.id}')" class="setlist-inline-btn delete-inline-btn" title="Delete">
+            <i class="fas fa-trash"></i>
+          </button>
+          <div class="setlist-arrow" onclick="window.openSetlist('${setlist.id}')">
+            <i class="fas fa-chevron-right"></i>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renameSetlistPrompt(setlistId) {
+  const setlists = getSetlists();
+  const setlist = setlists.find(s => s.id === setlistId);
+  
+  if (!setlist) return;
+  
+  const newName = prompt('Enter new name for setlist:', setlist.name);
+  if (!newName || newName.trim() === '') return;
+  
+  setlist.name = newName.trim();
+  saveSetlists(setlists);
+  
+  loadSetlists();
+  
+  if (currentUser) {
+    syncToCloud();
+  }
+}
+
+function deleteSetlistPrompt(setlistId) {
+  const setlists = getSetlists();
+  const setlist = setlists.find(s => s.id === setlistId);
+  
+  if (!setlist) return;
+  
+  if (!confirm(`Delete setlist "${setlist.name}"? This cannot be undone.`)) {
+    return;
+  }
+  
+  const newSetlists = setlists.filter(s => s.id !== setlistId);
+  saveSetlists(newSetlists);
+  
+  loadSetlists();
+  
+  if (currentUser) {
+    syncToCloud();
+  }
+}
+
+function openSetlist(setlistId) {
+  const setlists = getSetlists();
+  const setlist = setlists.find(s => s.id === setlistId);
+  
+  if (!setlist) return;
+  
+  setCurrentSetlistId(setlistId);
+  
+  document.getElementById('setlistsPage').classList.add('hidden');
+  document.getElementById('setlistDetailPage').classList.remove('hidden');
+  
+  document.getElementById('currentSetlistName').textContent = setlist.name;
+  
+  loadSetlistSongs();
+}
+
+function loadSetlistSongs() {
+  const setlistId = getCurrentSetlistId();
+  if (!setlistId) return;
+  
+  const setlists = getSetlists();
+  const setlist = setlists.find(s => s.id === setlistId);
+  
+  if (!setlist) return;
+  
+  const songsList = document.getElementById('setlistSongsList');
+  const lyrics = getLyrics();
+  
+  if (!setlist.songIds || setlist.songIds.length === 0) {
+    songsList.innerHTML = `
+      <div class="empty-setlists">
+        <i class="fas fa-music"></i>
+        <p>No songs in this setlist yet. Click "Add Songs" to get started!</p>
+      </div>
+    `;
+    return;
+  }
+  
+  songsList.innerHTML = setlist.songIds.map((songId, index) => {
+    const song = lyrics.find(l => l.id === songId);
+    if (!song) return '';
+    
+    const originalIndex = lyrics.findIndex(l => l.id === songId);
+    
+    return `
+      <div class="setlistSongItem">
+        <div class="song-number">${index + 1}</div>
+        <strong>${escapeHtml(song.title)}</strong>
+        <button onclick="window.showSong(${originalIndex})" class="open-btn">Open</button>
+        <button onclick="window.removeSongFromSetlist('${songId}')" class="remove-from-setlist">
+          <i class="fas fa-minus"></i>
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function showAddSongsPanel() {
+  const panel = document.getElementById('addSongsPanel');
+  const availableList = document.getElementById('availableSongsList');
+  
+  const setlistId = getCurrentSetlistId();
+  const setlists = getSetlists();
+  const setlist = setlists.find(s => s.id === setlistId);
+  const lyrics = getLyrics();
+  
+  if (lyrics.length === 0) {
+    availableList.innerHTML = '<p>No songs in your library. Add some songs first!</p>';
+    panel.classList.remove('hidden');
+    return;
+  }
+  
+  availableList.innerHTML = lyrics.map((song, index) => {
+    const isAdded = setlist.songIds && setlist.songIds.includes(song.id);
+    
+    return `
+      <div class="available-song-item ${isAdded ? 'added' : ''}" data-song-id="${song.id}">
+        <div>
+          <strong>${escapeHtml(song.title)}</strong>
+        </div>
+        <button 
+          onclick="window.addSongToSetlist('${song.id}')" 
+          class="add-song-btn"
+          ${isAdded ? 'disabled' : ''}
+        >
+          ${isAdded ? '<i class="fas fa-check"></i> Added' : '<i class="fas fa-plus"></i> Add'}
+        </button>
+      </div>
+    `;
+  }).join('');
+  
+  panel.classList.remove('hidden');
+}
+
+function addSongToSetlist(songId) {
+  const setlistId = getCurrentSetlistId();
+  const setlists = getSetlists();
+  const setlistIndex = setlists.findIndex(s => s.id === setlistId);
+  
+  if (setlistIndex === -1) return;
+  
+  if (!setlists[setlistIndex].songIds) {
+    setlists[setlistIndex].songIds = [];
+  }
+  
+  if (setlists[setlistIndex].songIds.includes(songId)) {
+    return;
+  }
+  
+  setlists[setlistIndex].songIds.push(songId);
+  saveSetlists(setlists);
+  
+  const songElement = document.querySelector(`[data-song-id="${songId}"]`);
+  if (songElement) {
+    songElement.classList.add('added');
+    const btn = songElement.querySelector('button');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-check"></i> Added';
+  }
+  
+  loadSetlistSongs();
+  
+  if (currentUser) {
+    syncToCloud();
+  }
+}
+
+function removeSongFromSetlist(songId) {
+  const setlistId = getCurrentSetlistId();
+  const setlists = getSetlists();
+  const setlistIndex = setlists.findIndex(s => s.id === setlistId);
+  
+  if (setlistIndex === -1) return;
+  
+  setlists[setlistIndex].songIds = setlists[setlistIndex].songIds.filter(id => id !== songId);
+  saveSetlists(setlists);
+  
+  loadSetlistSongs();
+  
+  if (currentUser) {
+    syncToCloud();
+  }
+}
+
 // --- Page setup ---
 document.addEventListener("DOMContentLoaded", () => {
-  // Initialize Firebase Auth
   initAuth();
-  
-  // Initialize search
   initSearch();
 
-  // ... (keep all your existing event listeners below) ...
-  
-  // Main page elements
   const saveLyricBtn = document.getElementById('saveLyric');
   if (saveLyricBtn) {
     saveLyricBtn.addEventListener('click', saveLyric);
   }
 
-  // ... (rest of your existing code) ...
+  const startBtnSaved = document.getElementById('startButtonSaved');
+  const releaseBtnSaved = document.getElementById('releaseButtonSaved');
+
+  if (startBtnSaved) {
+    startBtnSaved.addEventListener('click', () => {
+      const minutes = parseInt(document.getElementById('minutesSaved')?.value, 10) || 1;
+      requestWakeLock(minutes, document.getElementById('countdownSaved'), document.getElementById('progressBarSaved'));
+    });
+  }
+
+  if (releaseBtnSaved) {
+    releaseBtnSaved.addEventListener('click', () => {
+      releaseWakeLock(document.getElementById('countdownSaved'), document.getElementById('progressBarSaved'));
+    });
+  }
+
+  const clearAllBtn = document.getElementById('clearAllLyrics');
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', clearAllLyrics);
+  }
+
+  const syncButton = document.getElementById('syncButton');
+  if (syncButton) {
+    syncButton.addEventListener('click', syncToCloud);
+  }
+
+  const startBtnSong = document.getElementById('startButtonSong');
+  const releaseBtnSong = document.getElementById('releaseButtonSong');
+  const backToSaved = document.getElementById('backToSaved');
+
+  if (startBtnSong) {
+    startBtnSong.addEventListener('click', () => {
+      const minutes = parseInt(document.getElementById('minutesSong')?.value, 10) || 1;
+      const lyricsBox = document.getElementById('songLyrics');
+      if (lyricsBox) {
+        startAutoScroll(
+          minutes,
+          document.getElementById('countdownSong'),
+          document.getElementById('progressBarSong'),
+          lyricsBox
+        );
+      }
+    });
+  }
+
+  if (releaseBtnSong) {
+    releaseBtnSong.addEventListener('click', () => {
+      stopAutoScroll(document.getElementById('countdownSong'), document.getElementById('progressBarSong'));
+    });
+  }
+
+  if (backToSaved) {
+    backToSaved.addEventListener('click', () => {
+      stopAutoScroll(
+        document.getElementById('countdownSong'),
+        document.getElementById('progressBarSong')
+      );
+      document.getElementById('songViewPage').classList.add('hidden');
+      document.getElementById('savedPage').classList.remove('hidden');
+    });
+  }
+
+  const navLyrics = document.getElementById('navLyrics');
+  const backBtn = document.getElementById('backButton');
+
+  if (navLyrics) {
+    navLyrics.addEventListener('click', () => {
+      document.getElementById('mainPage').classList.add('hidden');
+      document.getElementById('setlistsPage').classList.add('hidden');
+      document.getElementById('setlistDetailPage').classList.add('hidden');
+      document.getElementById('savedPage').classList.remove('hidden');
+      loadLyrics();
+    });
+  }
+
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      document.getElementById('savedPage').classList.add('hidden');
+      document.getElementById('mainPage').classList.remove('hidden');
+    });
+  }
+
+  // Setlist navigation
+  const navSetlists = document.getElementById('navSetlists');
+  if (navSetlists) {
+    navSetlists.addEventListener('click', () => {
+      document.getElementById('mainPage').classList.add('hidden');
+      document.getElementById('savedPage').classList.add('hidden');
+      document.getElementById('songViewPage').classList.add('hidden');
+      document.getElementById('setlistsPage').classList.remove('hidden');
+      loadSetlists();
+    });
+  }
+
+  const backFromSetlists = document.getElementById('backFromSetlists');
+  if (backFromSetlists) {
+    backFromSetlists.addEventListener('click', () => {
+      document.getElementById('setlistsPage').classList.add('hidden');
+      document.getElementById('mainPage').classList.remove('hidden');
+    });
+  }
+
+  // CREATE SETLIST BUTTON LISTENER
+  const createSetlistBtn = document.getElementById('createSetlist');
+  if (createSetlistBtn) {
+    createSetlistBtn.addEventListener('click', createSetlist);
+  }
+
+  const backToSetlists = document.getElementById('backToSetlists');
+  if (backToSetlists) {
+    backToSetlists.addEventListener('click', () => {
+      document.getElementById('setlistDetailPage').classList.add('hidden');
+      document.getElementById('setlistsPage').classList.remove('hidden');
+      setCurrentSetlistId(null);
+      loadSetlists();
+    });
+  }
+
+  const addSongsBtn = document.getElementById('addSongsToSetlist');
+  if (addSongsBtn) {
+    addSongsBtn.addEventListener('click', showAddSongsPanel);
+  }
+
+  const closeAddSongs = document.getElementById('closeAddSongs');
+  if (closeAddSongs) {
+    closeAddSongs.addEventListener('click', () => {
+      document.getElementById('addSongsPanel').classList.add('hidden');
+    });
+  }
+
+  document.addEventListener('visibilitychange', async () => {
+    if (wakeLock !== null && document.visibilityState === 'visible') {
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+      } catch (err) {
+        console.log('Failed to re-acquire wake lock:', err);
+      }
+    }
+  });
+
+  loadLyrics();
 });
 
-// Expose functions to window for inline event handlers
+// Expose functions to window
 window.showSong = showSong;
 window.deleteLyric = deleteLyric;
 window.renameLyric = renameLyric;
-window.clearSearch = clearSearch; // Expose clearSearch too
+window.clearSearch = clearSearch;
+window.openSetlist = openSetlist;
+window.addSongToSetlist = addSongToSetlist;
+window.removeSongFromSetlist = removeSongFromSetlist;
+window.renameSetlistPrompt = renameSetlistPrompt;
+window.deleteSetlistPrompt = deleteSetlistPrompt;
