@@ -418,6 +418,314 @@ button:active {
   }
   
   .search-input {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
+  }
+}
+
+/* Setlist button in nav */
+.setlist-btn {
+  background: #9b59b6;
+  margin-left: 5px;
+}
+
+.setlist-btn:hover {
+  background: #8e44ad;
+}
+
+/* Setlists page styles */
+.setlist-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.setlist-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px 15px;
+  font-size: 16px;
+  border: 2px solid #9b59b6;
+  border-radius: 8px;
+  outline: none;
+}
+
+.setlist-input:focus {
+  border-color: #8e44ad;
+  box-shadow: 0 0 0 3px rgba(155, 89, 182, 0.1);
+}
+
+.setlist-create-btn {
+  background: #9b59b6;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  width: 90%;
+  align-self: center;
+}
+
+.setlist-create-btn:hover {
+  background: #8e44ad;
+}
+
+/* Setlist item with inline actions - UPDATED */
+.setlistItem {
+  background: #fff;
+  border: 2px solid #9b59b6;
+  padding: 15px 20px;
+  margin: 10px 0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(155, 89, 182, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.setlistItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(155, 89, 182, 0.25);
+  border-color: #8e44ad;
+}
+
+.setlist-info {
+  flex: 1;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.setlist-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 5px;
+  word-break: break-word;
+}
+
+.setlist-count {
+  font-size: 14px;
+  color: #7f8c8d;
+}
+
+/* Inline action buttons on setlist item - NEW */
+.setlist-actions-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 10px;
+}
+
+.setlist-inline-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.setlist-inline-btn:hover {
+  transform: scale(1.1);
+}
+
+.rename-inline-btn {
+  background: #3498db;
+}
+
+.rename-inline-btn:hover {
+  background: #2980b9;
+}
+
+.delete-inline-btn {
+  background: #e74c3c;
+}
+
+.delete-inline-btn:hover {
+  background: #c0392b;
+}
+
+.setlist-arrow {
+  color: #9b59b6;
+  font-size: 20px;
+  margin-left: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+/* Add songs button on detail page - FULL WIDTH */
+.add-songs-btn {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  background: #27ae60;
+  transition: background 0.2s;
+}
+
+.add-songs-btn:hover {
+  background: #229954;
+}
+
+/* Setlist song item */
+.setlistSongItem {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin: 8px 0;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.setlistSongItem .song-number {
+  background: #9b59b6;
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.setlistSongItem strong {
+  flex: 1;
+  font-size: 16px;
+}
+
+.remove-from-setlist {
+  background: #e74c3c;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.remove-from-setlist:hover {
+  background: #c0392b;
+}
+
+/* Add songs panel */
+.add-songs-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f4f6f9;
+  z-index: 100;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.add-songs-panel h3 {
+  margin-top: 0;
+  color: #2c3e50;
+}
+
+.available-song-item {
+  background: #fff;
+  border: 2px solid #27ae60;
+  padding: 15px;
+  margin: 8px 0;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.available-song-item:hover {
+  background: #d5f4e6;
+  transform: scale(1.02);
+}
+
+.available-song-item.added {
+  border-color: #95a5a6;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.available-song-item.added:hover {
+  background: #fff;
+  transform: none;
+}
+
+.add-song-btn {
+  background: #27ae60;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.add-song-btn:disabled {
+  background: #95a5a6;
+  cursor: not-allowed;
+}
+
+.close-panel-btn {
+  background: #2c3e50;
+  width: 100%;
+  margin-top: 20px;
+  padding: 15px;
+  font-size: 16px;
+}
+
+.close-panel-btn:hover {
+  background: #34495e;
+}
+
+/* Empty state */
+.empty-setlists {
+  text-align: center;
+  padding: 40px;
+  color: #7f8c8d;
+}
+
+.empty-setlists i {
+  font-size: 48px;
+  color: #bdc3c7;
+  margin-bottom: 15px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .setlist-controls {
+    flex-direction: column;
+  }
+  
+  .setlist-input {
+    width: 90%;
+  }
+  
+  .setlistItem {
+    padding: 12px 15px;
+  }
+  
+  .setlist-name {
+    font-size: 16px;
+  }
+  
+  .setlist-inline-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  .setlist-arrow {
+    font-size: 18px;
   }
 }
