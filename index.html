@@ -16,11 +16,11 @@
 </head>
 <body>
   <header>
-    <a href="index.html" class="logo"> M </a>
-    <h1>Musician</h1>
+    <img src="logo-big.png" alt="Musician" height="50px" width="50px">
     <nav>
-      <button id="navLyrics"><i class="fas fa-folder-open" aria-hidden="true"></i> Saved</button>
-      <button id="authButton" class="auth-btn"><i class="fas fa-user" aria-hidden="true"></i> Sign In</button>
+      <button id="navLyrics">Library</button>
+      <button id="navSetlists" class="setlist-btn">Setlists</button>
+      <button id="authButton" class="auth-btn">Sign In</button>
     </nav>
   </header>
 
@@ -46,26 +46,49 @@
     <h2>Saved Lyrics</h2>
     <div id="authStatus" class="auth-status"></div>
     
-    <!-- SEARCH BAR ADDED HERE -->
+    <!-- SEARCH BAR -->
     <div class="search-container">
       <input type="text" id="searchLyrics" placeholder="🔍 Search songs by title or lyrics..." class="search-input">
       <button id="clearSearch" class="clear-search hidden"><i class="fas fa-times"></i></button>
     </div>
     <div id="searchResults" class="search-results hidden"></div>
-    
-    <section class="timer">
-      <label for="minutesSaved">Timer (minutes):</label>
-      <input type="number" id="minutesSaved" min="1" value="4">
-      <button id="startButtonSaved">Start Wake Lock</button>
-      <button id="releaseButtonSaved">Release Wake Lock</button>
-      <div id="countdownSaved"></div>
-      <div class="progress"><div id="progressBarSaved"></div></div>
-    </section>
     <br>
     <button id="backButton"><i class="fas fa-angle-double-left"></i> Back</button>
     <div id="lyricsList"></div>
     <button class="clearAll" id="clearAllLyrics">Clear All Lyrics</button>
     <button class="sync-btn" id="syncButton"><i class="fas fa-sync"></i> Sync to Cloud</button>
+  </main>
+
+  <!-- Setlists Page -->
+  <main id="setlistsPage" class="hidden">
+    <h2>My Setlists</h2>
+    <div id="setlistAuthStatus" class="auth-status"></div>
+    
+    <div class="setlist-controls">
+      <input type="text" id="newSetlistName" placeholder="New setlist name..." class="setlist-input">
+      <button id="createSetlist" class="setlist-create-btn"><i class="fas fa-plus"></i> Create</button>
+    </div>
+    
+    <div id="setlistsList"></div>
+    
+    <button id="backFromSetlists"><i class="fa fa-home"></i> Home</button>
+  </main>
+
+  <!-- Setlist Detail Page - BUTTONS REMOVED FROM HERE -->
+  <main id="setlistDetailPage" class="hidden">
+    <h2 id="currentSetlistName"></h2>
+    
+    <button id="addSongsToSetlist" class="add-songs-btn"><i class="fas fa-plus"></i> Add Songs</button>
+    
+    <div id="setlistSongsList"></div>
+    
+    <div id="addSongsPanel" class="hidden add-songs-panel">
+      <h3>Add Songs to Setlist</h3>
+      <div id="availableSongsList"></div>
+      <button id="closeAddSongs" class="close-panel-btn">Done</button>
+    </div>
+    
+    <button id="backToSetlists"><i class="fas fa-angle-double-left"></i> Back to Setlists</button>
   </main>
 
   <!-- Song View Page -->
