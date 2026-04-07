@@ -19,7 +19,7 @@
     <a href="index.html" class="logo"> M </a>
     <h1>Musician</h1>
     <nav>
-      <button id="navNotes"><i class="fas fa-folder-open" aria-hidden="true"></i> Saved</button>
+      <button id="navLyrics"><i class="fas fa-folder-open" aria-hidden="true"></i> Saved</button>
       <button id="authButton" class="auth-btn"><i class="fas fa-user" aria-hidden="true"></i> Sign In</button>
     </nav>
   </header>
@@ -27,10 +27,10 @@
   <main id="mainPage">
     <section class="editor">
       <h2>Write Lyrics</h2>
-      <input class="songTitle" type="text" id="noteTitle" placeholder="Song title">
-      <button id="saveNote">Save <i class="fas fa-save"></i></button>
+      <input class="songTitle" type="text" id="lyricTitle" placeholder="Song title">
+      <button id="saveLyric">Save <i class="fas fa-save"></i></button>
       <br>
-      <textarea id="notesArea" placeholder="[Intro]
+      <textarea id="lyricsArea" placeholder="[Intro]
       
 [Verse 1]
   ...
@@ -41,10 +41,18 @@
     </section>
   </main>
 
-  <!-- Saved Notes Page -->
+  <!-- Saved Lyrics Page -->
   <main id="savedPage" class="hidden">
     <h2>Saved Lyrics</h2>
     <div id="authStatus" class="auth-status"></div>
+    
+    <!-- SEARCH BAR ADDED HERE -->
+    <div class="search-container">
+      <input type="text" id="searchLyrics" placeholder="🔍 Search songs by title or lyrics..." class="search-input">
+      <button id="clearSearch" class="clear-search hidden"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="searchResults" class="search-results hidden"></div>
+    
     <section class="timer">
       <label for="minutesSaved">Timer (minutes):</label>
       <input type="number" id="minutesSaved" min="1" value="4">
@@ -55,15 +63,15 @@
     </section>
     <br>
     <button id="backButton"><i class="fas fa-angle-double-left"></i> Back</button>
-    <div id="notesList"></div>
-    <button class="clearAll" id="clearAllNotes">Clear All Notes</button>
+    <div id="lyricsList"></div>
+    <button class="clearAll" id="clearAllLyrics">Clear All Lyrics</button>
     <button class="sync-btn" id="syncButton"><i class="fas fa-sync"></i> Sync to Cloud</button>
   </main>
 
   <!-- Song View Page -->
   <main id="songViewPage" class="hidden">
     <h2 id="songTitle"></h2>
-    
+
     <section class="timer">
       <label for="minutesSong"><i class="fas fa-stopwatch"></i> (minutes):</label>
       <input type="number" id="minutesSong" min="1" value="4">
