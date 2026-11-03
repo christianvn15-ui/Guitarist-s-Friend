@@ -1,117 +1,191 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Musician</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#3498db">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Musician</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#16283f" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.1.0/css/all.css" integrity="sha512-ajhUYg8JAATDFejqbeN7KbF2zyPbbqz04dgOLyGcYEk/MJD3V+HJhJLKvJ2VVlqrr4PwHeGTTWxbI+8teA7snw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.1.0/css/all.css"
+      integrity="sha512-ajhUYg8JAATDFejqbeN7KbF2zyPbbqz04dgOLyGcYEk/MJD3V+HJhJLKvJ2VVlqrr4PwHeGTTWxbI+8teA7snw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
 
-  <!-- Firebase Modular SDK -->
-  <script type="module" src="script.js"></script>
+    <!-- Firebase Modular SDK -->
+    <script type="module" src="script.js"></script>
+  </head>
+  <body>
+    <header>
+      <img src="logo-big.png" alt="Musician" height="50px" width="50px" />
+      <button id="menuToggle" class="menu-toggle" type="button" aria-label="Open menu" aria-controls="appMenu" aria-expanded="false"><i class="fas fa-bars" aria-hidden="true"></i><span>Menu</span></button>
+    </header>
 
-</head>
-<body>
-  <header>
-    <img src="logo-big.png" alt="Musician" height="50px" width="50px">
-    <nav>
-      <button id="navLyrics">Library</button>
-      <button id="navSetlists" class="setlist-btn">Setlists</button>
-      <button id="authButton" class="auth-btn">Sign In</button>
-    </nav>
-  </header>
+    <div id="menuBackdrop" class="menu-backdrop hidden" aria-hidden="true"></div>
+    <aside id="appMenu" class="app-menu" aria-label="App menu" aria-hidden="true" inert>
+      <div class="app-menu-header">
+        <div>
+          <span class="menu-eyebrow">MUSICIAN</span>
+          <h2>Menu</h2>
+        </div>
+        <button id="menuClose" class="menu-close" type="button" aria-label="Close menu"><i class="fas fa-times" aria-hidden="true"></i></button>
+      </div>
+      <div id="menuUserStatus" class="menu-user-status">Not signed in</div>
+      <nav class="menu-navigation" aria-label="Main navigation">
+        <button id="navLyrics" class="menu-nav-item" type="button"><i class="fas fa-music" aria-hidden="true"></i><span>Library</span></button>
+        <button id="navSetlists" class="menu-nav-item" type="button"><i class="fas fa-list-ol" aria-hidden="true"></i><span>Setlists</span></button>
+      </nav>
+      <div class="menu-section-label">APPEARANCE</div>
+      <div class="menu-setting-row">
+        <span><i class="fas fa-adjust" aria-hidden="true"></i> Theme</span>
+        <button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch to dark mode" title="Switch to dark mode"><i class="fas fa-moon" aria-hidden="true"></i><span>Dark</span></button>
+      </div>
+      <div class="menu-section-label account-label">ACCOUNT</div>
+      <button id="authButton" class="menu-account-button" type="button"><i class="fas fa-sign-in-alt" aria-hidden="true"></i><span>Sign in</span></button>
+    </aside>
 
-  <main id="mainPage">
-    <section class="editor">
-      <h2>Write Lyrics</h2>
-      <input class="songTitle" type="text" id="lyricTitle" placeholder="Song title">
-      <button id="saveLyric">Save <i class="fas fa-save"></i></button>
-      <br>
-      <textarea id="lyricsArea" placeholder="[Intro]
+    <main id="mainPage">
+      <section class="editor">
+        <h2>Write Lyrics</h2>
+        <input
+          class="songTitle"
+          type="text"
+          id="lyricTitle"
+          placeholder="Song title"
+        />
+        <label class="field-label" for="genreSelect">Difficulty</label>
+        <div class="difficulty-control">
+          <select id="genreSelect" aria-label="Song difficulty">
+            <option value="" selected disabled>Set Difficulty</option>
+            <option value="1">★☆☆☆☆</option>
+            <option value="2">★★☆☆☆</option>
+            <option value="3">★★★☆☆</option>
+            <option value="4">★★★★☆</option>
+            <option value="5">★★★★★</option>
+          </select>
+        </div>
+        <button id="saveLyric">Save <i class="fas fa-save"></i></button>
+        <br />
+        <textarea
+          id="lyricsArea"
+          placeholder="[Intro]
       
 [Verse 1]
   ...
         
 [Chorus]
   ...
-      "></textarea>
-    </section>
-  </main>
+      "
+        ></textarea>
+      </section>
+    </main>
 
-  <!-- Saved Lyrics Page -->
-  <main id="savedPage" class="hidden">
-    <h2>Saved Lyrics</h2>
-    <div id="authStatus" class="auth-status"></div>
-    
-    <!-- SEARCH BAR -->
-    <div class="search-container">
-      <input type="text" id="searchLyrics" placeholder="🔍 Search songs by title or lyrics..." class="search-input">
-      <button id="clearSearch" class="clear-search hidden"><i class="fas fa-times"></i></button>
-    </div>
-    <div id="searchResults" class="search-results hidden"></div>
-    <br>
-    <button id="backButton"><i class="fas fa-angle-double-left"></i> Back</button>
-    <div id="lyricsList"></div>
-    <button class="clearAll" id="clearAllLyrics">Clear All Lyrics</button>
-    <button class="sync-btn" id="syncButton"><i class="fas fa-sync"></i> Sync to Cloud</button>
-  </main>
+    <!-- Saved Lyrics Page -->
+    <main id="savedPage" class="hidden">
+      <h2>Saved Lyrics</h2>
+      <div id="authStatus" class="auth-status"></div>
 
-  <!-- Setlists Page -->
-  <main id="setlistsPage" class="hidden">
-    <h2>My Setlists</h2>
-    <div id="setlistAuthStatus" class="auth-status"></div>
-    
-    <div class="setlist-controls">
-      <input type="text" id="newSetlistName" placeholder="New setlist name..." class="setlist-input">
-      <button id="createSetlist" class="setlist-create-btn"><i class="fas fa-plus"></i> Create</button>
-    </div>
-    
-    <div id="setlistsList"></div>
-    
-    <button id="backFromSetlists"><i class="fa fa-home"></i> Home</button>
-  </main>
+      <!-- SEARCH BAR -->
+      <div class="search-container">
+        <input
+          type="text"
+          id="searchLyrics"
+          placeholder="🔍 Search songs by title or lyrics..."
+          class="search-input"
+        />
+        <button id="clearSearch" class="clear-search hidden">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div id="searchResults" class="search-results hidden"></div>
+      <br />
+      <button id="backButton">
+        <i class="fas fa-angle-double-left"></i> Back
+      </button>
+      <div id="lyricsList"></div>
+      <button class="clearAll" id="clearAllLyrics">Clear All Lyrics</button>
+      <button class="sync-btn" id="syncButton">
+        <i class="fas fa-sync"></i> Sync to Cloud
+      </button>
+    </main>
 
-  <!-- Setlist Detail Page - BUTTONS REMOVED FROM HERE -->
-  <main id="setlistDetailPage" class="hidden">
-    <h2 id="currentSetlistName"></h2>
-    
-    <button id="addSongsToSetlist" class="add-songs-btn"><i class="fas fa-plus"></i> Add Songs</button>
-    
-    <div id="setlistSongsList"></div>
-    
-    <div id="addSongsPanel" class="hidden add-songs-panel">
-      <h3>Add Songs to Setlist</h3>
-      <div id="availableSongsList"></div>
-      <button id="closeAddSongs" class="close-panel-btn">Done</button>
-    </div>
-    
-    <button id="backToSetlists"><i class="fas fa-angle-double-left"></i> Back to Setlists</button>
-  </main>
+    <!-- Setlists Page -->
+    <main id="setlistsPage" class="hidden">
+      <h2>My Setlists</h2>
+      <div id="setlistAuthStatus" class="auth-status"></div>
 
-  <!-- Song View Page -->
-  <main id="songViewPage" class="hidden">
-    <h2 id="songTitle"></h2>
+      <div class="setlist-controls">
+        <input
+          type="text"
+          id="newSetlistName"
+          placeholder="New setlist name..."
+          class="setlist-input"
+        />
+        <button id="createSetlist" class="setlist-create-btn">
+          <i class="fas fa-plus"></i> Create
+        </button>
+      </div>
 
-    <section class="timer">
-      <label for="minutesSong"><i class="fas fa-stopwatch"></i> (minutes):</label>
-      <input type="number" id="minutesSong" min="1" value="4">
-      <br>
-      <button id="startButtonSong"><i class="fas fa-play"></i></button>
-      <button id="releaseButtonSong"><i class="fas fa-pause"></i></button>
-      <div id="countdownSong"></div>
-      <div class="progress"><div id="progressBarSong"></div></div>
-    </section>
-    <button id="backToSaved"><i class="fas fa-angle-double-left"></i> Back</button>
-    <div id="songLyrics" class="lyricsBox"></div>
-  </main>
+      <div id="setlistsList"></div>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js').catch(err => console.log('SW registration failed:', err));
-    }
-  </script>
-</body>
+      <button id="backFromSetlists"><i class="fa fa-home"></i> Home</button>
+    </main>
+
+    <!-- Setlist Detail Page - BUTTONS REMOVED FROM HERE -->
+    <main id="setlistDetailPage" class="hidden">
+      <h2 id="currentSetlistName"></h2>
+
+      <button id="addSongsToSetlist" class="add-songs-btn">
+        <i class="fas fa-plus"></i> Add Songs
+      </button>
+
+      <div id="setlistSongsList"></div>
+
+      <div id="addSongsPanel" class="hidden add-songs-panel">
+        <h3>Add Songs to Setlist</h3>
+        <div id="availableSongsList"></div>
+        <button id="closeAddSongs" class="close-panel-btn">Done</button>
+      </div>
+
+      <button id="backToSetlists">
+        <i class="fas fa-angle-double-left"></i> Back to Setlists
+      </button>
+    </main>
+
+    <!-- Song View Page -->
+    <main id="songViewPage" class="hidden">
+      <h2 id="songTitle"></h2>
+
+      <section class="timer">
+        <label for="minutesSong"
+          ><i class="fas fa-stopwatch"></i> (minutes):</label
+        >
+        <input type="number" id="minutesSong" min="1" value="4" />
+        <br />
+        <button id="startButtonSong"><i class="fas fa-play"></i></button>
+        <button id="releaseButtonSong"><i class="fas fa-pause"></i></button>
+        <div id="countdownSong"></div>
+        <div class="progress"><div id="progressBarSong"></div></div>
+      </section>
+      <button id="backToSaved">
+        <i class="fas fa-angle-double-left"></i> Back
+      </button>
+      <div id="songLyrics" class="lyricsBox"></div>
+    </main>
+
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("service-worker.js")
+          .catch((err) => console.log("SW registration failed:", err));
+      }
+    </script>
+  </body>
 </html>
