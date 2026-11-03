@@ -105,12 +105,14 @@ function initAuth() {
   const authButton = document.getElementById('authButton');
   const authStatus = document.getElementById('authStatus');
   const setlistAuthStatus = document.getElementById('setlistAuthStatus');
+  const menuUserStatus = document.getElementById('menuUserStatus');
 
   onAuthStateChanged(auth, (user) => {
     currentUser = user;
     if (user) {
-      authButton.textContent = 'Quit';
+      authButton.innerHTML = '<i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Sign out</span>';
       authButton.onclick = handleSignOut;
+      if (menuUserStatus) menuUserStatus.textContent = `Signed in as ${user.displayName || user.email}`;
       if (authStatus) {
         authStatus.textContent = `Signed in as: ${user.displayName || user.email}`;
         authStatus.className = 'auth-status signed-in';
@@ -121,8 +123,9 @@ function initAuth() {
       }
       startRealtimeSync();
     } else {
-      authButton.textContent = 'Sign In';
+      authButton.innerHTML = '<i class="fas fa-sign-in-alt" aria-hidden="true"></i><span>Sign in</span>';
       authButton.onclick = signInWithGoogle;
+      if (menuUserStatus) menuUserStatus.textContent = 'Not signed in · using local storage';
       if (authStatus) {
         authStatus.textContent = 'Not signed in - using local storage only';
         authStatus.className = 'auth-status signed-out';
@@ -248,7 +251,7 @@ function loadLyrics() {
     const div = document.createElement('div');
     div.className = 'lyricItem';
     div.innerHTML = `
-      <strong contenteditable="true" onblur="window.renameLyric(${index}, this.textContent)">${escapeHtml(lyric.title)}</strong>
+      <div class="song-list-title"><strong contenteditable="true" onblur="window.renameLyric(${index}, this.textContent)">${escapeHtml(lyric.title)}</strong>${renderDifficultyStars(lyric.difficulty)}</div>
       <div>
         <button onclick="window.showSong(${index})">Open</button>
         <button class="deleteLyric" onclick="window.deleteLyric(${index})"><i class="fas fa-trash"></i></button>
@@ -264,6 +267,102 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function getDifficultyLevel(song) {
+  const value = Number(song?.difficulty);
+  if (Number.isInteger(value) && value >= 1 && value <= 5) return value;
+  // Keep older songs readable after upgrading from the previous difficulty picker.
+  return ({ beginner: 1, intermediate: 3, advanced: 5 })[song?.difficulty] || 0;
+}
+
+function renderDifficultyStars(difficulty) {
+  const level = getDifficultyLevel({ difficulty });
+  return level ? `<span class="difficulty-stars" role="img" aria-label="${level} star${level === 1 ? '' : 's'} difficulty">${'★'.repeat(level)}</span>` : '';
+}
+
+function updateDifficultyPreview() {
+  const select = document.getElementById('genreSelect');
+  const preview = document.getElementById('difficultyPreview');
+  if (!select || !preview) return;
+  const level = getDifficultyLevel({ difficulty: select.value });
+  preview.innerHTML = level
+    ? `<span class="difficulty-stars" role="img" aria-label="${level} out of 5 stars">${'★'.repeat(level)}<span class="difficulty-stars-empty">${'☆'.repeat(5 - level)}</span></span><span>${level} of 5</span>`
+    : 'Select difficulty';
+}
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme');
+  const theme = savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const button = document.getElementById('themeToggle');
+  const applyTheme = (nextTheme) => {
+    document.documentElement.dataset.theme = nextTheme;
+    const dark = nextTheme === 'dark';
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b1420' : '#16283f');
+    if (button) {
+      button.innerHTML = `<i class="fas fa-${dark ? 'sun' : 'moon'}" aria-hidden="true"></i><span>${dark ? 'Light' : 'Dark'}</span>`;
+      button.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} mode`);
+      button.title = `Switch to ${dark ? 'light' : 'dark'} mode`;
+    }
+  };
+  applyTheme(theme);
+  button?.addEventListener('click', () => {
+    const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('theme', nextTheme);
+    applyTheme(nextTheme);
+  });
+}
+
+function initAppMenu() {
+  const menu = document.getElementById('appMenu');
+  const backdrop = document.getElementById('menuBackdrop');
+  const openButton = document.getElementById('menuToggle');
+  const closeButton = document.getElementById('menuClose');
+  if (!menu || !backdrop || !openButton || !closeButton) return;
+
+  const closeMenu = () => {
+    menu.classList.remove('open');
+    menu.setAttribute('aria-hidden', 'true');
+    menu.inert = true;
+    backdrop.classList.add('hidden');
+    document.body.classList.remove('menu-open');
+    openButton.setAttribute('aria-expanded', 'false');
+    openButton.focus();
+  };
+  const openMenu = () => {
+    menu.classList.add('open');
+    menu.setAttribute('aria-hidden', 'false');
+    menu.inert = false;
+    backdrop.classList.remove('hidden');
+    document.body.classList.add('menu-open');
+    openButton.setAttribute('aria-expanded', 'true');
+    closeButton.focus();
+  };
+
+  openButton.addEventListener('click', openMenu);
+  closeButton.addEventListener('click', closeMenu);
+  backdrop.addEventListener('click', closeMenu);
+  menu.querySelectorAll('.menu-nav-item, #themeToggle, #authButton').forEach((control) => {
+    control.addEventListener('click', closeMenu);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (!menu.classList.contains('open')) return;
+    if (event.key === 'Escape') {
+      closeMenu();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = [...menu.querySelectorAll('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), [tabindex]:not([tabindex="-1"])')];
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  });
+}
+
 function saveLyric() {
   const titleInput = document.getElementById('lyricTitle');
   const lyricsArea = document.getElementById('lyricsArea');
@@ -272,12 +371,14 @@ function saveLyric() {
 
   const title = titleInput.value.trim() || "Untitled";
   const content = lyricsArea.value;
+  const difficulty = document.getElementById('genreSelect')?.value || '';
 
   if (!content.trim()) return;
 
   const lyrics = getLyrics();
   const newLyric = { 
-    title, 
+    title,
+    difficulty,
     content, 
     createdAt: new Date().toISOString(),
     id: Date.now().toString()
@@ -287,6 +388,9 @@ function saveLyric() {
 
   lyricsArea.value = '';
   titleInput.value = '';
+  const difficultySelect = document.getElementById('genreSelect');
+  if (difficultySelect) difficultySelect.value = '';
+  updateDifficultyPreview();
   loadLyrics();
 
   if (currentUser) {
@@ -396,7 +500,7 @@ function showSong(index) {
   const titleEl = document.getElementById('songTitle');
   const lyricsBox = document.getElementById('songLyrics');
 
-  if (titleEl) titleEl.textContent = lyric.title;
+  if (titleEl) titleEl.innerHTML = `${escapeHtml(lyric.title)} ${renderDifficultyStars(lyric.difficulty)}`;
   if (lyricsBox) {
     lyricsBox.innerHTML = escapeHtml(lyric.content).replace(/\n/g, "<br>");
     lyricsBox.scrollTop = 0;
@@ -515,7 +619,7 @@ function performSearch(query) {
       
       return `
         <div class="search-result-item" onclick="window.showSong(${index}); clearSearch();">
-          <div class="search-result-title">${highlightedTitle}</div>
+          <div class="search-result-title">${highlightedTitle} ${renderDifficultyStars(lyric.difficulty)}</div>
           <div class="search-result-preview">${highlightedPreview}</div>
         </div>
       `;
@@ -724,9 +828,9 @@ function loadSetlistSongs() {
     const originalIndex = lyrics.findIndex(l => l.id === songId);
     
     return `
-      <div class="setlistSongItem">
+      <div class="setlistSongItem" data-song-id="${escapeHtml(songId)}" draggable="true" title="Drag to reorder">
         <div class="song-number">${index + 1}</div>
-        <strong>${escapeHtml(song.title)}</strong>
+        <strong>${escapeHtml(song.title)} ${renderDifficultyStars(song.difficulty)}</strong>
         <button onclick="window.showSong(${originalIndex})" class="open-btn">Open</button>
         <button onclick="window.removeSongFromSetlist('${songId}')" class="remove-from-setlist">
           <i class="fas fa-minus"></i>
@@ -734,6 +838,54 @@ function loadSetlistSongs() {
       </div>
     `;
   }).join('');
+}
+
+function initSetlistSongReordering() {
+  const songsList = document.getElementById('setlistSongsList');
+  if (!songsList) return;
+
+  let draggedSongId = null;
+  songsList.addEventListener('dragstart', (event) => {
+    const item = event.target.closest('.setlistSongItem');
+    if (!item) return;
+    draggedSongId = item.dataset.songId;
+    item.classList.add('dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', draggedSongId);
+  });
+  songsList.addEventListener('dragend', (event) => {
+    event.target.closest('.setlistSongItem')?.classList.remove('dragging');
+    draggedSongId = null;
+    songsList.querySelectorAll('.drag-over').forEach(item => item.classList.remove('drag-over'));
+  });
+  songsList.addEventListener('dragover', (event) => {
+    const target = event.target.closest('.setlistSongItem');
+    if (!target || !draggedSongId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    songsList.querySelectorAll('.drag-over').forEach(item => item.classList.remove('drag-over'));
+    target.classList.add('drag-over');
+  });
+  songsList.addEventListener('drop', (event) => {
+    const target = event.target.closest('.setlistSongItem');
+    if (!target || !draggedSongId) return;
+    event.preventDefault();
+    const targetSongId = target.dataset.songId;
+    if (draggedSongId === targetSongId) return;
+
+    const setlistId = getCurrentSetlistId();
+    const setlists = getSetlists();
+    const setlist = setlists.find(item => item.id === setlistId);
+    if (!setlist?.songIds) return;
+    const fromIndex = setlist.songIds.indexOf(draggedSongId);
+    const toIndex = setlist.songIds.indexOf(targetSongId);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const [movedSongId] = setlist.songIds.splice(fromIndex, 1);
+    setlist.songIds.splice(toIndex, 0, movedSongId);
+    saveSetlists(setlists);
+    loadSetlistSongs();
+    if (currentUser) syncToCloud();
+  });
 }
 
 function showAddSongsPanel() {
@@ -757,7 +909,7 @@ function showAddSongsPanel() {
     return `
       <div class="available-song-item ${isAdded ? 'added' : ''}" data-song-id="${song.id}">
         <div>
-          <strong>${escapeHtml(song.title)}</strong>
+          <strong>${escapeHtml(song.title)} ${renderDifficultyStars(song.difficulty)}</strong>
         </div>
         <button 
           onclick="window.addSongToSetlist('${song.id}')" 
@@ -825,8 +977,14 @@ function removeSongFromSetlist(songId) {
 
 // --- Page setup ---
 document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
+  initAppMenu();
   initAuth();
   initSearch();
+  initSetlistSongReordering();
+
+  document.getElementById('genreSelect')?.addEventListener('change', updateDifficultyPreview);
+  updateDifficultyPreview();
 
   const saveLyricBtn = document.getElementById('saveLyric');
   if (saveLyricBtn) {
